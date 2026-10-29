@@ -21,11 +21,15 @@ Dapr talks to Artemis through its AMQP 1.0 component, `pubsub.amqp`. You'll find
 
 ## Run it
 
+The log lines under each step come from a test run on Dapr 1.19.0. Your output will have more lines. These are the ones to look for.
+
 1. Start Artemis.
 
 ```bash
 docker run -d -p 5672:5672 -p 8161:8161 --env ARTEMIS_USER=artemis --env ARTEMIS_PASSWORD=artemis --name artemis apache/activemq-artemis:latest
 ```
+
+It prints a container ID. Give it about 20 seconds to start before the next step. The Artemis console is at http://localhost:8161 (user `artemis`, password `artemis`).
 
 2. Start the Node subscriber.
 
@@ -33,6 +37,16 @@ docker run -d -p 5672:5672 -p 8161:8161 --env ARTEMIS_USER=artemis --env ARTEMIS
 cd node-subscriber
 npm install
 dapr run --app-id node-subscriber --resources-path ../components --app-port 3000 node app.js
+```
+
+Look for
+
+```text
+Component loaded: pubsub (pubsub.amqp/v1)
+app is subscribed to the following topics: [[A B]] through pubsub=pubsub
+Attempting to subscribe to multicast://A
+Attempting to subscribe to multicast://B
+✅  You're up and running! Both Dapr and your app logs will appear here.
 ```
 
 3. In a new terminal, start the Python subscriber.
@@ -43,45 +57,34 @@ uv sync
 dapr run --app-id python-subscriber --resources-path ../components --app-port 5001 uv run python app.py
 ```
 
-4. Optionally, start the C# subscriber in another terminal.
+Look for
+
+```text
+Component loaded: pubsub (pubsub.amqp/v1)
+app is subscribed to the following topics: [[A C]] through pubsub=pubsub
+Attempting to subscribe to multicast://A
+Attempting to subscribe to multicast://C
+✅  You're up and running! Both Dapr and your app logs will appear here.
+```
+
+4. Optionally, start the C# subscriber in another terminal. It listens to A, B and C.
 
 ```bash
 cd csharp-subscriber
 dapr run --app-id csharp-subscriber --resources-path ../components --app-port 5009 dotnet run csharp-subscriber.csproj
 ```
 
-5. Publish a message from the repo root.
+5. In a new terminal, publish one message to each topic from the repo root.
 
 ```bash
 dapr publish --publish-app-id node-subscriber --pubsub pubsub --topic A --data-file message_a.json
+dapr publish --publish-app-id node-subscriber --pubsub pubsub --topic B --data-file message_b.json
+dapr publish --publish-app-id node-subscriber --pubsub pubsub --topic C --data-file message_c.json
 ```
 
-Or start the web form and open http://localhost:8080.
-
-```bash
-cd react-form
-npm run buildclient
-npm install
-dapr run --app-id react-form --resources-path ../components --app-port 8080 npm run start
-```
-
-## What you should see
-
-These snippets are from a test run on Dapr 1.19.0. Each subscriber only gets the topics it asked for.
-
-When an app starts, Dapr loads the Artemis component and subscribes to the topics.
+Each one prints
 
 ```text
-Component loaded: pubsub (pubsub.amqp/v1)
-app is subscribed to the following topics: [[A B]] through pubsub=pubsub
-Attempting to subscribe to multicast://A
-Attempting to subscribe to multicast://B
-```
-
-Publishing A, B and C.
-
-```text
-$ dapr publish --publish-app-id node-subscriber --pubsub pubsub --topic A --data-file message_a.json
 ✅  Event published successfully
 ```
 
@@ -99,9 +102,14 @@ Received message "Message on A" on topic "A"
 Received message "Message on C" on topic "C"
 ```
 
-The C# subscriber listens to all three topics.
+6. Or publish from the web form instead. Start it and open http://localhost:8080.
 
-You can also watch the messages in the Artemis console at http://localhost:8161 (user `artemis`, password `artemis`).
+```bash
+cd react-form
+npm run buildclient
+npm install
+dapr run --app-id react-form --resources-path ../components --app-port 8080 npm run start
+```
 
 ## Clean up
 
