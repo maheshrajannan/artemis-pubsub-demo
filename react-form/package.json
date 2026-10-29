@@ -1,0 +1,25 @@
+{
+  "name": "react-form",
+  "version": "1.0.0",
+  "private": true,
+  "description": "This project builds and serves the react form client along with the services that it depends on",
+  "main": "server.js",
+  "scripts": {
+    "client": "cd client && yarn start",
+    "server": "nodemon server.js",
+    "dev": "concurrently --kill-others-on-fail \"yarn server\" \"yarn client\"",
+    "start": "node server.js",
+    "buildclient": "cd client && npm install && npm run build",
+    "build": "npm run buildclient && npm install"
+  },
+  "author": "Ryan Volum",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "express": "^4.17.3"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.4"
+  }
+}
