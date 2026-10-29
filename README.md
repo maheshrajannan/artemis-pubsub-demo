@@ -67,14 +67,39 @@ dapr run --app-id react-form --resources-path ../components --app-port 8080 npm 
 
 ## What you should see
 
-Each subscriber only gets the topics it asked for.
+These snippets are from a test run on Dapr 1.19.0. Each subscriber only gets the topics it asked for.
+
+When an app starts, Dapr loads the Artemis component and subscribes to the topics.
 
 ```text
-node-subscriber     A:  Message on A
-python-subscriber   Received message "Message on A" on topic "A"
+Component loaded: pubsub (pubsub.amqp/v1)
+app is subscribed to the following topics: [[A B]] through pubsub=pubsub
+Attempting to subscribe to multicast://A
+Attempting to subscribe to multicast://B
 ```
 
-Topic B goes to Node and C#. Topic C goes to Python and C#.
+Publishing A, B and C.
+
+```text
+$ dapr publish --publish-app-id node-subscriber --pubsub pubsub --topic A --data-file message_a.json
+✅  Event published successfully
+```
+
+The Node subscriber gets A and B.
+
+```text
+A:  Message on A
+B:  Message on B
+```
+
+The Python subscriber gets A and C.
+
+```text
+Received message "Message on A" on topic "A"
+Received message "Message on C" on topic "C"
+```
+
+The C# subscriber listens to all three topics.
 
 You can also watch the messages in the Artemis console at http://localhost:8161 (user `artemis`, password `artemis`).
 
