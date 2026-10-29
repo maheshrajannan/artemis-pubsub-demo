@@ -11,13 +11,12 @@ Dapr talks to Artemis through its AMQP 1.0 component, `pubsub.amqp`. You'll find
 | `react-form` | Publisher (web form) | A, B or C |
 | `node-subscriber` | Subscriber | A, B |
 | `python-subscriber` | Subscriber | A, C |
-| `csharp-subscriber` | Subscriber | A, B, C |
 
 ## Prerequisites
 
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/), runtime 1.19 or later (`dapr init`)
 - [Docker](https://docs.docker.com/get-docker/)
-- Node.js, plus [uv](https://docs.astral.sh/uv/) for Python. .NET 6 or later is only needed for the C# app.
+- Node.js, plus [uv](https://docs.astral.sh/uv/) for Python. 
 
 ## Run it
 
@@ -29,7 +28,7 @@ The log lines under each step come from a test run on Dapr 1.19.0. Your output w
 docker run -d -p 5672:5672 -p 8161:8161 --env ARTEMIS_USER=artemis --env ARTEMIS_PASSWORD=artemis --name artemis apache/activemq-artemis:latest
 ```
 
-It prints a container ID. Give it about 20 seconds to start before the next step. The Artemis console is at http://localhost:8161 (user `artemis`, password `artemis`).
+It prints a container ID. Give it a moment to start before the next step.
 
 2. Start the Node subscriber.
 
@@ -67,14 +66,7 @@ Attempting to subscribe to multicast://C
 ✅  You're up and running! Both Dapr and your app logs will appear here.
 ```
 
-4. Optionally, start the C# subscriber in another terminal. It listens to A, B and C.
-
-```bash
-cd csharp-subscriber
-dapr run --app-id csharp-subscriber --resources-path ../components --app-port 5009 dotnet run csharp-subscriber.csproj
-```
-
-5. In a new terminal, publish one message to each topic from the repo root.
+4. In a new terminal, publish one message to each topic from the repo root.
 
 ```bash
 dapr publish --publish-app-id node-subscriber --pubsub pubsub --topic A --data-file message_a.json
@@ -102,13 +94,31 @@ Received message "Message on A" on topic "A"
 Received message "Message on C" on topic "C"
 ```
 
-6. Or publish from the web form instead. Start it and open http://localhost:8080.
+5. Or publish from the web form instead. Start it and open http://localhost:8080.
 
 ```bash
 cd react-form
 npm run buildclient
 npm install
 dapr run --app-id react-form --resources-path ../components --app-port 8080 npm run start
+```
+
+The build can take a minute. Look for
+
+```text
+Component loaded: pubsub (pubsub.amqp/v1)
+Listening on port 8080!
+✅  You're up and running! Both Dapr and your app logs will appear here.
+```
+
+Open http://localhost:8080. You should see this form.
+
+![Pub-Sub form](./images/react-form.png)
+
+Pick a message type, enter some text and submit. The React terminal logs the publish.
+
+```text
+Publishing:  { messageType: 'A', message: 'message A' }
 ```
 
 ## Clean up
@@ -118,10 +128,6 @@ Stop each app with Ctrl+C, then remove the broker.
 ```bash
 docker rm -f artemis
 ```
-
-## Going back to Redis
-
-Drop `--resources-path ../components` from the `dapr run` commands. Dapr then uses the default Redis component that `dapr init` set up.
 
 ## License
 
